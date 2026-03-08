@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Verb Paradigms Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --violet: #D98CF4;
+    --violet-dark: #b564d9;
+    --wisteria: #8CA7F4;
+    --wisteria-dark: #6285e8;
+    --floral: #FFF8F0;
+    --lime: #DBF48C;
+    --lime-dark: #b8d454;
+    --text: #2a1a3e;
+    --text-light: #5a4a6e;
+    --shadow: rgba(42, 26, 62, 0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--floral);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Background decoration */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(217,140,244,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -10%;
+    left: -5%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(140,167,244,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── LAYOUT ─── */
+  #app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ─── HEADER BAR ─── */
+  #header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 30px;
+    background: rgba(255,248,240,0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 2px solid rgba(217,140,244,0.25);
+    z-index: 100;
+  }
+
+  #header h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  #header h1 span { color: var(--violet-dark); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #score-badge {
+    background: var(--lime);
+    border: 2px solid var(--lime-dark);
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text);
+    display: none;
+  }
+
+  #print-btn {
+    background: transparent;
+    border: 2px solid var(--wisteria);
+    color: var(--wisteria-dark);
+    border-radius: 20px;
+    padding: 5px 18px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+  }
+  #print-btn:hover {
+    background: var(--wisteria);
+    color: white;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    max-width: 900px;
+    padding-top: 80px;
+  }
+  .screen.active { display: flex; }
+
+  /* ─── START SCREEN ─── */
+  #screen-start .hero-emoji {
+    font-size: 5rem;
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  #screen-start h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  #screen-start p {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 40px;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 1.8rem;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.04em;
+    padding: 18px 60px;
+  }
+  .btn:hover { transform: translateY(-3px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-start {
+    background: var(--violet);
+    color: white;
+    box-shadow: 0 8px 0 var(--violet-dark), 0 12px 30px rgba(217,140,244,0.4);
+  }
+  .btn-start:hover { box-shadow: 0 10px 0 var(--violet-dark), 0 16px 40px rgba(217,140,244,0.5); }
+
+  .btn-show {
+    background: var(--lime);
+    color: var(--text);
+    box-shadow: 0 8px 0 var(--lime-dark), 0 12px 30px rgba(219,244,140,0.5);
+    font-size: 2rem;
+    padding: 20px 70px;
+  }
+  .btn-show:hover { box-shadow: 0 10px 0 var(--lime-dark), 0 16px 40px rgba(219,244,140,0.6); }
+
+  .btn-next {
+    background: var(--wisteria);
+    color: white;
+    box-shadow: 0 8px 0 var(--wisteria-dark), 0 12px 30px rgba(140,167,244,0.4);
+  }
+  .btn-next:hover { box-shadow: 0 10px 0 var(--wisteria-dark), 0 16px 40px rgba(140,167,244,0.5); }
+
+  /* ─── GAME SCREEN ─── */
+  #screen-game { gap: 30px; }
+
+  /* Timer ring */
+  #timer-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+  }
+
+  #timer-svg {
+    transform: rotate(-90deg);
+    width: 160px;
+    height: 160px;
+  }
+
+  #timer-track {
+    fill: none;
+    stroke: rgba(140,167,244,0.2);
+    stroke-width: 12;
+  }
+
+  #timer-bar {
+    fill: none;
+    stroke: var(--wisteria);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 408.41; /* 2π×65 */
+    stroke-dashoffset: 0;
+    transition: stroke 0.5s, stroke-dashoffset 1s linear;
+  }
+
+  #timer-num {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    transition: color 0.5s;
+  }
+
+  /* Question card */
+  #question-card {
+    background: white;
+    border-radius: 30px;
+    padding: 50px 80px;
+    box-shadow: 0 12px 50px var(--shadow);
+    border: 3px solid rgba(217,140,244,0.2);
+    min-width: 500px;
+    max-width: 750px;
+    width: 100%;
+  }
+
+  #question-label {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--violet-dark);
+    margin-bottom: 20px;
+  }
+
+  #question-text {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 4.5rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    word-break: break-word;
+  }
+
+  /* Answer card */
+  #answer-card {
+    background: var(--lime);
+    border-radius: 30px;
+    padding: 50px 80px;
+    box-shadow: 0 12px 50px rgba(184,212,84,0.4);
+    border: 3px solid var(--lime-dark);
+    min-width: 500px;
+    max-width: 750px;
+    width: 100%;
+    animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pop-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  #answer-label {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--lime-dark);
+    margin-bottom: 20px;
+  }
+
+  #answer-text {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 3.8rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  /* Group hint badge */
+  #group-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    background: var(--violet);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 16px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(217,140,244,0.5);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #group-hint.visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Question counter */
+  #q-counter {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(255,255,255,0.8);
+    border: 2px solid rgba(140,167,244,0.3);
+    border-radius: 14px;
+    padding: 8px 18px;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-light);
+    display: none;
+    z-index: 110;
+  }
+
+  /* Timer danger */
+  .timer-danger #timer-bar { stroke: #f87171; }
+  .timer-danger #timer-num { color: #dc2626; }
+  .timer-warning #timer-bar { stroke: #fb923c; }
+  .timer-warning #timer-num { color: #ea580c; }
+
+  /* ─── ANSWER SCREEN ─── */
+  #screen-answer { gap: 30px; }
+
+  /* ─── PRINT MODAL ─── */
+  #print-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(42,26,62,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #print-modal.open { display: flex; }
+
+  #print-modal-inner {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(42,26,62,0.3);
+  }
+
+  #print-modal-inner h2 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.8rem;
+    margin-bottom: 24px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #session-list { list-style: none; }
+
+  #session-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(140,167,244,0.2);
+    font-size: 1.05rem;
+  }
+
+  .sl-num {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--violet-dark);
+    min-width: 28px;
+  }
+
+  .sl-q { flex: 1; font-weight: 600; color: var(--text); }
+  .sl-a { font-family: 'Fredoka', sans-serif; font-weight: 700; color: var(--lime-dark); }
+  .sl-g { font-size: 0.8rem; color: var(--text-light); }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+
+  .btn-sm {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .btn-sm:hover { transform: translateY(-2px); }
+  .btn-print-go { background: var(--violet); color: white; }
+  .btn-close-modal { background: rgba(140,167,244,0.2); color: var(--text); }
+
+  /* ─── PRINT STYLES ─── */
+  @media print {
+    body { background: white; overflow: auto; }
+    #app, #header, #print-modal { display: none !important; }
+    #print-sheet { display: block !important; }
+  }
+
+  #print-sheet {
+    display: none;
+    padding: 30px;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  #print-sheet h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+  }
+
+  #print-sheet .print-meta {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 20px;
+  }
+
+  #print-sheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  #print-sheet th {
+    background: #f0f0f0;
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+    font-weight: 700;
+  }
+
+  #print-sheet td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+  }
+
+  #print-sheet tr:nth-child(even) td { background: #fafafa; }
+  /* Floating skip button (teacher) */
+  #skip-btn {
+    position: fixed;
+    bottom: 90px; /* above q-counter */
+    right: 30px;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    background: var(--wisteria);
+    color: white;
+    box-shadow: 0 8px 20px rgba(140,167,244,0.35);
+    z-index: 120;
+    pointer-events: auto;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  #skip-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(140,167,244,0.45); }
+
+  /* Small green 'show answer now' button (visible during timer) */
+  #show-now-btn {
+    position: fixed;
+    bottom: 150px; /* above skip button */
+    right: 30px;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    background: var(--lime);
+    color: var(--lime-dark);
+    box-shadow: 0 8px 20px rgba(184,212,84,0.35);
+    z-index: 120;
+    pointer-events: auto;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  #show-now-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(184,212,84,0.45); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>⚡ Verb <span>Paradigms</span> Game</h1>
+  <div class="header-right">
+    <div id="score-badge">🎯 <span id="score-num">0</span> questions played</div>
+    <button id="print-btn" onclick="openPrintModal()">🖨️ Print session</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- START SCREEN -->
+  <div id="screen-start" class="screen active">
+    <div class="hero-emoji">📚</div>
+    <h2>Irregular Verbs</h2>
+    <p>Write your answer on paper · roll it · shoot it! 🏀</p>
+    <button class="btn btn-start" onclick="startGame()">START ▶</button>
+  </div>
+
+  <!-- GAME SCREEN (question + timer) -->
+  <div id="screen-game" class="screen">
+    <div id="timer-wrap">
+      <svg id="timer-svg" viewBox="0 0 160 160">
+        <circle id="timer-track" cx="80" cy="80" r="65"/>
+        <circle id="timer-bar" cx="80" cy="80" r="65"/>
+      </svg>
+      <div id="timer-num">18</div>
+    </div>
+
+    <div id="question-card">
+      <div id="question-label">QUESTION</div>
+      <div id="question-text"></div>
+    </div>
+
+    <div id="show-answer-wrap" style="display:none;">
+      <button class="btn btn-show" onclick="showAnswer()">👁 SHOW ANSWER</button>
+    </div>
+  </div>
+
+  <!-- ANSWER SCREEN -->
+  <div id="screen-answer" class="screen">
+    <div id="question-card-small" style="background:white;border-radius:24px;padding:30px 60px;box-shadow:0 8px 30px var(--shadow);border:2px solid rgba(217,140,244,0.2);max-width:700px;width:100%;">
+      <div style="font-size:0.85rem;font-weight:800;letter-spacing:0.15em;text-transform:uppercase;color:var(--violet-dark);margin-bottom:12px;">QUESTION</div>
+      <div id="question-replay" style="font-family:'Fredoka',sans-serif;font-size:2.8rem;font-weight:700;color:var(--text);"></div>
+    </div>
+
+    <div id="answer-card">
+      <div id="answer-label">ANSWER ✅</div>
+      <div id="answer-text"></div>
+    </div>
+
+    <button class="btn btn-next" onclick="nextQuestion()">NEXT QUESTION →</button>
+  </div>
+
+</div>
+
+<!-- GROUP HINT -->
+<div id="group-hint"></div>
+
+<!-- Q COUNTER -->
+<div id="q-counter"></div>
+
+<!-- SKIP BUTTON (visible during game/answer) -->
+<button id="skip-btn" title="Salta domanda" aria-label="Salta domanda" onclick="skipQuestion()" tabindex="0">⏭️</button>
+<!-- SHOW ANSWER NOW (visible during game) -->
+<button id="show-now-btn" title="Mostra risposta" aria-label="Mostra risposta" onclick="showAnswer()" tabindex="0">👁️</button>
+
+<!-- PRINT MODAL -->
+<div id="print-modal">
+  <div id="print-modal-inner">
+    <h2>🖨️ Session Summary</h2>
+    <ul id="session-list"></ul>
+    <div class="modal-actions">
+      <button class="btn-sm btn-close-modal" onclick="closePrintModal()">Close</button>
+      <button class="btn-sm btn-print-go" onclick="doPrint()">Print 🖨️</button>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN PRINT SHEET -->
+<div id="print-sheet">
+  <h1>⚡ Verb Paradigms – Session Log</h1>
+  <div class="print-meta" id="print-date"></div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Question</th><th>Answer</th><th>Group</th></tr>
+    </thead>
+    <tbody id="print-body"></tbody>
+  </table>
+</div>
+
+<script>
+// ─── VERB DATA ───────────────────────────────────────────────────────────────
+const GROUPS = {
+  pod:     { label: "🫛 3 Peas in a Pod",    hint: "All 3 forms are the same!" },
+  burger:  { label: "🍔 The Hamburger",       hint: "Top = bottom bun, different middle!" },
+  ought:   { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
+  short:   { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
+  tee:     { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
+  iau:     { label: "🎤 The i-a-u Singers",   hint: "Vowel changes: i → a → u" },
+  eww:     { label: "💨 The -ew Group",       hint: "Past simple ends in -ew!" },
+  riders:  { label: "🚴 The Riders",          hint: "Past participle ends in -ridden/tten" },
+  en:      { label: "📝 The -en Group",       hint: "Participle gets -en ending!" },
+  loners:  { label: "🌟 The Loners",          hint: "No pattern – learn by heart!" },
+};
+
+const VERBS = [
+  // 3 Peas in a Pod
+  { question: "to risk money 🎲",          answer: "bet – bet – bet",           group: "pod" },
+  { question: "cut ✂️",                     answer: "cut – cut – cut",           group: "pod" },
+  { question: "hit 👊",                     answer: "hit – hit – hit",           group: "pod" },
+  { question: "hurt 🤕",                    answer: "hurt – hurt – hurt",        group: "pod" },
+  { question: "put 📍",                     answer: "put – put – put",           group: "pod" },
+  { question: "read 📖",                    answer: "read – read – read",        group: "pod" },
+  { question: "let 🚪",                     answer: "let – let – let",           group: "pod" },
+  { question: "cost 💰",                    answer: "cost – cost – cost",        group: "pod" },
+
+  // The Hamburger
+  { question: "become 🦋",                 answer: "become – became – become",  group: "burger" },
+  { question: "come 🚶",                   answer: "come – came – come",        group: "burger" },
+  { question: "🏃",                        answer: "run – ran – run",           group: "burger" },
+  { question: "overcome 💪",               answer: "overcome – overcame – overcome", group: "burger" },
+
+  // The -ought Gang
+  { question: "bring 📦",                  answer: "bring – brought – brought", group: "ought" },
+  { question: "buy 🛒",                    answer: "buy – bought – bought",     group: "ought" },
+  { question: "think 🤔",                  answer: "think – thought – thought", group: "ought" },
+  { question: "teach 👩‍🏫",                 answer: "teach – taught – taught",   group: "ought" },
+  { question: "catch 🧤",                  answer: "catch – caught – caught",   group: "ought" },
+  { question: "fight 🥊",                  answer: "fight – fought – fought",   group: "ought" },
+
+  // Short Vowel Switchers
+  { question: "get ✅",                    answer: "get – got – got",           group: "short" },
+  { question: "sit 🪑",                    answer: "sit – sat – sat",           group: "short" },
+  { question: "win 🏆",                    answer: "win – won – won",           group: "short" },
+  { question: "stand 🧍",                  answer: "stand – stood – stood",     group: "short" },
+  { question: "hold 🤝",                   answer: "hold – held – held",        group: "short" },
+  { question: "meet 👋",                   answer: "meet – met – met",          group: "short" },
+
+  // The T Ending
+  { question: "build 🏗️",                  answer: "build – built – built",     group: "tee" },
+  { question: "lend 💰",                   answer: "lend – lent – lent",        group: "tee" },
+  { question: "send 📬",                   answer: "send – sent – sent",        group: "tee" },
+  { question: "spend 💵",                  answer: "spend – spent – spent",     group: "tee" },
+  { question: "feel 💗",                   answer: "feel – felt – felt",        group: "tee" },
+  { question: "sleep 😴",                  answer: "sleep – slept – slept",     group: "tee" },
+  { question: "keep 🔒",                   answer: "keep – kept – kept",        group: "tee" },
+  { question: "leave 👋",                  answer: "leave – left – left",       group: "tee" },
+
+  // i-a-u Singers
+  { question: "sing 🎵",                   answer: "sing – sang – sung",        group: "iau" },
+  { question: "drink 🥤",                  answer: "drink – drank – drunk",     group: "iau" },
+  { question: "swim 🏊",                   answer: "swim – swam – swum",        group: "iau" },
+  { question: "begin ▶️",                  answer: "begin – began – begun",     group: "iau" },
+  { question: "ring 🔔",                   answer: "ring – rang – rung",        group: "iau" },
+  { question: "spring 🌸",                 answer: "spring – sprang – sprung",  group: "iau" },
+
+  // The -ew Group
+  { question: "blow 💨",                   answer: "blow – blew – blown",       group: "eww" },
+  { question: "grow 🌱",                   answer: "grow – grew – grown",       group: "eww" },
+  { question: "know 💡",                   answer: "know – knew – known",       group: "eww" },
+  { question: "throw ⚾",                  answer: "throw – threw – thrown",    group: "eww" },
+  { question: "✈️",                        answer: "fly – flew – flown",        group: "eww" },
+
+  // The Riders
+  { question: "ride 🚴",                   answer: "ride – rode – ridden",      group: "riders" },
+  { question: "write ✍️",                  answer: "write – wrote – written",   group: "riders" },
+  { question: "drive 🚗",                  answer: "drive – drove – driven",    group: "riders" },
+  { question: "rise ☀️",                   answer: "rise – rose – risen",       group: "riders" },
+
+  // The -en Group
+  { question: "eat 🍽️",                   answer: "eat – ate – eaten",         group: "en" },
+  { question: "speak 🗣️",                 answer: "speak – spoke – spoken",    group: "en" },
+  { question: "break 💔",                  answer: "break – broke – broken",    group: "en" },
+  { question: "steal 🦹",                  answer: "steal – stole – stolen",    group: "en" },
+  { question: "choose ✅",                 answer: "choose – chose – chosen",   group: "en" },
+  { question: "fall 🍂",                   answer: "fall – fell – fallen",      group: "en" },
+  { question: "give 🎁",                   answer: "give – gave – given",       group: "en" },
+
+  // The Loners
+  { question: "be ⭐",                     answer: "be – was/were – been",      group: "loners" },
+  { question: "go 🚶‍♂️",                   answer: "go – went – gone",          group: "loners" },
+  { question: "do ✅",                     answer: "do – did – done",           group: "loners" },
+  { question: "see 👁️",                   answer: "see – saw – seen",          group: "loners" },
+  { question: "take 🤚",                   answer: "take – took – taken",       group: "loners" },
+  { question: "wake ⏰",                   answer: "wake – woke – woken",       group: "loners" },
+  { question: "wear 👕",                   answer: "wear – wore – worn",        group: "loners" },
+  { question: "show 👉",                   answer: "show – showed – shown",     group: "loners" },
+  { question: "have 🤲",                   answer: "have – had – had",          group: "loners" },
+  { question: "make 🛠️",                  answer: "make – made – made",        group: "loners" },
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentVerb = null;
+let timerInterval = null;
+let timeLeft = 18;
+let recentIndices = [];
+let sessionLog = [];
+let totalPlayed = 0;
+
+const CIRCUMFERENCE = 2 * Math.PI * 65; // 408.41
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const screens = {
+  start:  document.getElementById('screen-start'),
+  game:   document.getElementById('screen-game'),
+  answer: document.getElementById('screen-answer'),
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+  updateSkipBtn(name);
+}
+
+// Toggle visibility of skip button based on active screen
+function updateSkipBtn(name) {
+  const btn = document.getElementById('skip-btn');
+  if (!btn) return;
+  btn.style.display = (name === 'game' || name === 'answer') ? 'flex' : 'none';
+  const showNow = document.getElementById('show-now-btn');
+  if (showNow) showNow.style.display = (name === 'game') ? 'flex' : 'none';
+}
+
+
+// ─── GAME LOGIC ───────────────────────────────────────────────────────────────
+function pickVerb() {
+  let available = VERBS.map((_, i) => i).filter(i => !recentIndices.includes(i));
+  if (available.length === 0) { recentIndices = []; available = VERBS.map((_, i) => i); }
+  const idx = available[Math.floor(Math.random() * available.length)];
+  recentIndices.push(idx);
+  if (recentIndices.length > Math.floor(VERBS.length / 2)) recentIndices.shift();
+  return VERBS[idx];
+}
+
+function startGame() {
+  document.getElementById('score-badge').style.display = 'inline-block';
+  document.getElementById('print-btn').style.display = 'inline-block';
+  document.getElementById('q-counter').style.display = 'block';
+  loadQuestion();
+}
+
+function loadQuestion() {
+  currentVerb = pickVerb();
+
+  // Set question
+  document.getElementById('question-text').textContent = currentVerb.question;
+  document.getElementById('show-answer-wrap').style.display = 'none';
+
+  // Update question counter to show upcoming question number
+  const qCounter = document.getElementById('q-counter');
+  if (qCounter) qCounter.textContent = `#${totalPlayed + 1}`;
+
+  // Reset timer visuals
+  timeLeft = 18;
+  updateTimerDisplay(18);
+  document.getElementById('timer-wrap').className = '';
+
+  // Hide group hint
+  const hint = document.getElementById('group-hint');
+  hint.classList.remove('visible');
+  hint.textContent = '';
+
+  showScreen('game');
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  const bar = document.getElementById('timer-bar');
+  bar.style.strokeDashoffset = 0;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay(timeLeft);
+
+    // Color warnings
+    const wrap = document.getElementById('timer-wrap');
+    wrap.className = '';
+    if (timeLeft <= 5)  wrap.classList.add('timer-danger');
+    else if (timeLeft <= 10) wrap.classList.add('timer-warning');
+
+    // Show group hint at ≤8 seconds
+    if (timeLeft === 8) {
+      const g = GROUPS[currentVerb.group];
+      const hint = document.getElementById('group-hint');
+      hint.innerHTML = `${g.label}`;
+      hint.classList.add('visible');
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timeUp();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(t) {
+  const bar = document.getElementById('timer-bar');
+  const num = document.getElementById('timer-num');
+  const frac = t / 18;
+  bar.style.strokeDashoffset = CIRCUMFERENCE * (1 - frac);
+  num.textContent = Math.max(0, t);
+}
+
+function timeUp() {
+  document.getElementById('show-answer-wrap').style.display = 'block';
+}
+
+function showAnswer() {
+  clearInterval(timerInterval);
+
+  // Hide group hint
+  document.getElementById('group-hint').classList.remove('visible');
+
+  // Add to session log
+  totalPlayed++;
+  sessionLog.push({ ...currentVerb });
+
+  // Update counter
+  document.getElementById('score-num').textContent = totalPlayed;
+  document.getElementById('q-counter').textContent = `#${totalPlayed}`;
+
+  // Set answer screen
+  document.getElementById('question-replay').textContent = currentVerb.question;
+  document.getElementById('answer-text').textContent = currentVerb.answer;
+
+  showScreen('answer');
+}
+
+function nextQuestion() {
+  loadQuestion();
+}
+
+// Skip current question immediately and load next (teacher override)
+function skipQuestion() {
+  clearInterval(timerInterval);
+  // hide hint if visible
+  const hint = document.getElementById('group-hint');
+  if (hint) hint.classList.remove('visible');
+  loadQuestion();
+}
+
+// ─── PRINT ────────────────────────────────────────────────────────────────────
+function openPrintModal() {
+  if (sessionLog.length === 0) {
+    alert('No questions played yet!');
+    return;
+  }
+  const ul = document.getElementById('session-list');
+  ul.innerHTML = '';
+  sessionLog.forEach((v, i) => {
+    const li = document.createElement('li');
+    const g = GROUPS[v.group];
+    li.innerHTML = `
+      <span class="sl-num">${i + 1}.</span>
+      <span class="sl-q">${v.question}</span>
+      <span class="sl-a">${v.answer}</span>
+      <span class="sl-g">${g.label}</span>
+    `;
+    ul.appendChild(li);
+  });
+  document.getElementById('print-modal').classList.add('open');
+}
+
+function closePrintModal() {
+  document.getElementById('print-modal').classList.remove('open');
+}
+
+function doPrint() {
+  // Build print sheet
+  const tbody = document.getElementById('print-body');
+  tbody.innerHTML = '';
+  sessionLog.forEach((v, i) => {
+    const g = GROUPS[v.group];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${v.question}</td><td><strong>${v.answer}</strong></td><td>${g.label}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('print-date').textContent =
+    'Session on ' + new Date().toLocaleString();
+
+  closePrintModal();
+  window.print();
+}
+
+// Close modal on outside click
+document.getElementById('print-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePrintModal();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    const activeScreen = document.querySelector('.screen.active');
+    if (!activeScreen) return;
+    const id = activeScreen.id;
+    if (id === 'screen-start') startGame();
+    else if (id === 'screen-game' && timeLeft <= 0) showAnswer();
+    else if (id === 'screen-answer') nextQuestion();
+  }
+});
+</script>
+</body>
+</html>
