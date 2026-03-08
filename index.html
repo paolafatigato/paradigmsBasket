@@ -246,6 +246,24 @@
     transition: color 0.5s;
   }
 
+  /* Question type pill */
+  #question-type-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 30px;
+    margin-bottom: 18px;
+    transition: background 0.3s, color 0.3s;
+  }
+  .pill-verb    { background: rgba(217,140,244,0.18); color: var(--violet-dark); }
+  .pill-emoji   { background: rgba(140,167,244,0.18); color: var(--wisteria-dark); }
+  .pill-meaning { background: rgba(219,244,140,0.35); color: #7a9a00; }
+
   /* Question card */
   #question-card {
     background: white;
@@ -256,16 +274,10 @@
     min-width: 500px;
     max-width: 750px;
     width: 100%;
+    transition: border-color 0.3s;
   }
-
-  #question-label {
-    font-size: 0.95rem;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--violet-dark);
-    margin-bottom: 20px;
-  }
+  #question-card.type-emoji   { border-color: rgba(140,167,244,0.4); }
+  #question-card.type-meaning { border-color: rgba(219,244,140,0.7); }
 
   #question-text {
     font-family: 'Fredoka', sans-serif;
@@ -274,7 +286,10 @@
     color: var(--text);
     line-height: 1.1;
     word-break: break-word;
+    transition: font-size 0.2s;
   }
+  #question-text.size-emoji   { font-size: 8rem; }
+  #question-text.size-meaning { font-size: 2.4rem; line-height: 1.35; }
 
   /* Answer card */
   #answer-card {
@@ -350,7 +365,6 @@
     font-size: 1rem;
     color: var(--text-light);
     display: none;
-    z-index: 110;
   }
 
   /* Timer danger */
@@ -485,11 +499,10 @@
     vertical-align: top;
   }
 
-  #print-sheet tr:nth-child(even) td { background: #fafafa; }
-  /* Floating skip button (teacher) */
+  /* Floating teacher buttons */
   #skip-btn {
     position: fixed;
-    bottom: 90px; /* above q-counter */
+    bottom: 86px;
     right: 30px;
     width: 56px;
     height: 56px;
@@ -510,10 +523,9 @@
   }
   #skip-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(140,167,244,0.45); }
 
-  /* Small green 'show answer now' button (visible during timer) */
   #show-now-btn {
     position: fixed;
-    bottom: 150px; /* above skip button */
+    bottom: 146px; /* above skip */
     right: 30px;
     width: 56px;
     height: 56px;
@@ -533,7 +545,13 @@
     transition: transform 0.12s, box-shadow 0.12s;
   }
   #show-now-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(184,212,84,0.45); }
+
+  #print-sheet tr:nth-child(even) td { background: #fafafa; }
 </style>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#D98CF4">
 </head>
 <body>
 
@@ -568,7 +586,7 @@
     </div>
 
     <div id="question-card">
-      <div id="question-label">QUESTION</div>
+      <div id="question-type-pill" class="pill-verb">🔤 write the 3 forms</div>
       <div id="question-text"></div>
     </div>
 
@@ -600,10 +618,9 @@
 <!-- Q COUNTER -->
 <div id="q-counter"></div>
 
-<!-- SKIP BUTTON (visible during game/answer) -->
+<!-- Floating teacher controls -->
+<button id="show-now-btn" title="Mostra risposta ora" aria-label="Mostra risposta ora" onclick="showAnswer()" tabindex="0">👁️</button>
 <button id="skip-btn" title="Salta domanda" aria-label="Salta domanda" onclick="skipQuestion()" tabindex="0">⏭️</button>
-<!-- SHOW ANSWER NOW (visible during game) -->
-<button id="show-now-btn" title="Mostra risposta" aria-label="Mostra risposta" onclick="showAnswer()" tabindex="0">👁️</button>
 
 <!-- PRINT MODAL -->
 <div id="print-modal">
@@ -634,9 +651,9 @@
 const GROUPS = {
   pod:     { label: "🫛 3 Peas in a Pod",    hint: "All 3 forms are the same!" },
   burger:  { label: "🍔 The Hamburger",       hint: "Top = bottom bun, different middle!" },
-  ought:   { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
-  short:   { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
-  tee:     { label: "👩‍👧‍👦 Mom & sons",          hint: "Past & participle are twins!" },
+  ought:   { label: "💭 The -ought Gang",     hint: "Past & participle are twins!" },
+  short:   { label: "🔠 Short Vowel Switch",  hint: "Past & participle are twins!" },
+  tee:     { label: "✉️ The T-Ending",        hint: "Past & participle are twins!" },
   iau:     { label: "🎤 The i-a-u Singers",   hint: "Vowel changes: i → a → u" },
   eww:     { label: "💨 The -ew Group",       hint: "Past simple ends in -ew!" },
   riders:  { label: "🚴 The Riders",          hint: "Past participle ends in -ridden/tten" },
@@ -645,89 +662,121 @@ const GROUPS = {
 };
 
 const VERBS = [
-  // 3 Peas in a Pod
-  { question: "to risk money 🎲",          answer: "bet – bet – bet",           group: "pod" },
-  { question: "cut ✂️",                     answer: "cut – cut – cut",           group: "pod" },
-  { question: "hit 👊",                     answer: "hit – hit – hit",           group: "pod" },
-  { question: "hurt 🤕",                    answer: "hurt – hurt – hurt",        group: "pod" },
-  { question: "put 📍",                     answer: "put – put – put",           group: "pod" },
-  { question: "read 📖",                    answer: "read – read – read",        group: "pod" },
-  { question: "let 🚪",                     answer: "let – let – let",           group: "pod" },
-  { question: "cost 💰",                    answer: "cost – cost – cost",        group: "pod" },
+  // ── 3 PEAS IN A POD ──────────────────────────────────────────
+  { type:"verb",    question: "to risk money 🎲",          answer: "bet – bet – bet",           group: "pod" },
+  { type:"verb",    question: "bet 🎲",                    answer: "bet – bet – bet",           group: "pod" },
+  { type:"meaning", question: "to divide something with scissors ✂️", answer: "cut – cut – cut", group: "pod" },
+  { type:"emoji",   question: "✂️",                        answer: "cut – cut – cut",           group: "pod" },
+  { type:"meaning", question: "to strike with force 👊",   answer: "hit – hit – hit",           group: "pod" },
+  { type:"emoji",   question: "👊",                        answer: "hit – hit – hit",           group: "pod" },
+  { type:"meaning", question: "to cause pain 🤕",          answer: "hurt – hurt – hurt",        group: "pod" },
+  { type:"verb",    question: "hurt 🤕",                   answer: "hurt – hurt – hurt",        group: "pod" },
+  { type:"meaning", question: "to place something down 📍", answer: "put – put – put",          group: "pod" },
+  { type:"verb",    question: "put 📍",                    answer: "put – put – put",           group: "pod" },
+  { type:"emoji",   question: "📖",                        answer: "read – read – read",        group: "pod" },
+  { type:"meaning", question: "to allow someone to do something 🚪", answer: "let – let – let", group: "pod" },
+  { type:"meaning", question: "to have a price 💸",        answer: "cost – cost – cost",        group: "pod" },
 
-  // The Hamburger
-  { question: "become 🦋",                 answer: "become – became – become",  group: "burger" },
-  { question: "come 🚶",                   answer: "come – came – come",        group: "burger" },
-  { question: "🏃",                        answer: "run – ran – run",           group: "burger" },
-  { question: "overcome 💪",               answer: "overcome – overcame – overcome", group: "burger" },
+  // ── THE HAMBURGER ─────────────────────────────────────────────
+  { type:"meaning", question: "to transform 🦋",           answer: "become – became – become",  group: "burger" },
+  { type:"meaning", question: "to move toward someone 🚶", answer: "come – came – come",        group: "burger" },
+  { type:"emoji",   question: "🏃",                        answer: "run – ran – run",           group: "burger" },
+  { type:"meaning", question: "to move fast on foot 🏃",   answer: "run – ran – run",           group: "burger" },
+  { type:"verb",    question: "overcome 💪",               answer: "overcome – overcame – overcome", group: "burger" },
 
-  // The -ought Gang
-  { question: "bring 📦",                  answer: "bring – brought – brought", group: "ought" },
-  { question: "buy 🛒",                    answer: "buy – bought – bought",     group: "ought" },
-  { question: "think 🤔",                  answer: "think – thought – thought", group: "ought" },
-  { question: "teach 👩‍🏫",                 answer: "teach – taught – taught",   group: "ought" },
-  { question: "catch 🧤",                  answer: "catch – caught – caught",   group: "ought" },
-  { question: "fight 🥊",                  answer: "fight – fought – fought",   group: "ought" },
+  // ── THE -OUGHT GANG ───────────────────────────────────────────
+  { type:"meaning", question: "to carry something with you 📦", answer: "bring – brought – brought", group: "ought" },
+  { type:"verb",    question: "bring 📦",                  answer: "bring – brought – brought", group: "ought" },
+  { type:"emoji",   question: "🛒",                        answer: "buy – bought – bought",     group: "ought" },
+  { type:"meaning", question: "to purchase something 🛒",  answer: "buy – bought – bought",     group: "ought" },
+  { type:"emoji",   question: "🤔",                        answer: "think – thought – thought", group: "ought" },
+  { type:"meaning", question: "to use your brain 🤔",      answer: "think – thought – thought", group: "ought" },
+  { type:"meaning", question: "to help others learn 👩‍🏫",  answer: "teach – taught – taught",   group: "ought" },
+  { type:"verb",    question: "teach 👩‍🏫",                 answer: "teach – taught – taught",   group: "ought" },
+  { type:"meaning", question: "to grab something moving fast 🧤", answer: "catch – caught – caught", group: "ought" },
+  { type:"meaning", question: "to fight in a battle ⚔️",   answer: "fight – fought – fought",   group: "ought" },
 
-  // Short Vowel Switchers
-  { question: "get ✅",                    answer: "get – got – got",           group: "short" },
-  { question: "sit 🪑",                    answer: "sit – sat – sat",           group: "short" },
-  { question: "win 🏆",                    answer: "win – won – won",           group: "short" },
-  { question: "stand 🧍",                  answer: "stand – stood – stood",     group: "short" },
-  { question: "hold 🤝",                   answer: "hold – held – held",        group: "short" },
-  { question: "meet 👋",                   answer: "meet – met – met",          group: "short" },
+  // ── SHORT VOWEL SWITCHERS ─────────────────────────────────────
+  { type:"meaning", question: "to obtain something ✅",    answer: "get – got – got",           group: "short" },
+  { type:"emoji",   question: "🪑",                        answer: "sit – sat – sat",           group: "short" },
+  { type:"meaning", question: "to be seated 🪑",           answer: "sit – sat – sat",           group: "short" },
+  { type:"emoji",   question: "🏆",                        answer: "win – won – won",           group: "short" },
+  { type:"meaning", question: "to be victorious 🏆",       answer: "win – won – won",           group: "short" },
+  { type:"meaning", question: "to be upright on your feet 🧍", answer: "stand – stood – stood", group: "short" },
+  { type:"meaning", question: "to grip tightly 🤝",        answer: "hold – held – held",        group: "short" },
+  { type:"meaning", question: "to encounter someone 👋",   answer: "meet – met – met",          group: "short" },
 
-  // The T Ending
-  { question: "build 🏗️",                  answer: "build – built – built",     group: "tee" },
-  { question: "lend 💰",                   answer: "lend – lent – lent",        group: "tee" },
-  { question: "send 📬",                   answer: "send – sent – sent",        group: "tee" },
-  { question: "spend 💵",                  answer: "spend – spent – spent",     group: "tee" },
-  { question: "feel 💗",                   answer: "feel – felt – felt",        group: "tee" },
-  { question: "sleep 😴",                  answer: "sleep – slept – slept",     group: "tee" },
-  { question: "keep 🔒",                   answer: "keep – kept – kept",        group: "tee" },
-  { question: "leave 👋",                  answer: "leave – left – left",       group: "tee" },
+  // ── THE T ENDING ─────────────────────────────────────────────
+  { type:"emoji",   question: "🏗️",                        answer: "build – built – built",     group: "tee" },
+  { type:"meaning", question: "to construct a building 🏗️", answer: "build – built – built",    group: "tee" },
+  { type:"meaning", question: "to loan money to someone 💰", answer: "lend – lent – lent",      group: "tee" },
+  { type:"emoji",   question: "📬",                        answer: "send – sent – sent",        group: "tee" },
+  { type:"meaning", question: "to mail something 📬",       answer: "send – sent – sent",        group: "tee" },
+  { type:"meaning", question: "to use money 💵",            answer: "spend – spent – spent",     group: "tee" },
+  { type:"meaning", question: "to experience an emotion ❤️", answer: "feel – felt – felt",      group: "tee" },
+  { type:"emoji",   question: "😴",                        answer: "sleep – slept – slept",     group: "tee" },
+  { type:"meaning", question: "to rest with eyes closed 😴", answer: "sleep – slept – slept",   group: "tee" },
+  { type:"meaning", question: "to continue to have something 🔒", answer: "keep – kept – kept", group: "tee" },
+  { type:"meaning", question: "to go away from a place 👋", answer: "leave – left – left",      group: "tee" },
 
-  // i-a-u Singers
-  { question: "sing 🎵",                   answer: "sing – sang – sung",        group: "iau" },
-  { question: "drink 🥤",                  answer: "drink – drank – drunk",     group: "iau" },
-  { question: "swim 🏊",                   answer: "swim – swam – swum",        group: "iau" },
-  { question: "begin ▶️",                  answer: "begin – began – begun",     group: "iau" },
-  { question: "ring 🔔",                   answer: "ring – rang – rung",        group: "iau" },
-  { question: "spring 🌸",                 answer: "spring – sprang – sprung",  group: "iau" },
+  // ── i-a-u SINGERS ────────────────────────────────────────────
+  { type:"emoji",   question: "🎵",                        answer: "sing – sang – sung",        group: "iau" },
+  { type:"meaning", question: "to make music with your voice 🎵", answer: "sing – sang – sung", group: "iau" },
+  { type:"emoji",   question: "🥤",                        answer: "drink – drank – drunk",     group: "iau" },
+  { type:"meaning", question: "to swallow a liquid 🥤",    answer: "drink – drank – drunk",     group: "iau" },
+  { type:"emoji",   question: "🏊",                        answer: "swim – swam – swum",        group: "iau" },
+  { type:"meaning", question: "to move in water 🏊",       answer: "swim – swam – swum",        group: "iau" },
+  { type:"meaning", question: "to start something ▶️",     answer: "begin – began – begun",     group: "iau" },
+  { type:"emoji",   question: "🔔",                        answer: "ring – rang – rung",        group: "iau" },
+  { type:"meaning", question: "to make a bell sound 🔔",   answer: "ring – rang – rung",        group: "iau" },
 
-  // The -ew Group
-  { question: "blow 💨",                   answer: "blow – blew – blown",       group: "eww" },
-  { question: "grow 🌱",                   answer: "grow – grew – grown",       group: "eww" },
-  { question: "know 💡",                   answer: "know – knew – known",       group: "eww" },
-  { question: "throw ⚾",                  answer: "throw – threw – thrown",    group: "eww" },
-  { question: "✈️",                        answer: "fly – flew – flown",        group: "eww" },
+  // ── THE -EW GROUP ────────────────────────────────────────────
+  { type:"emoji",   question: "💨",                        answer: "blow – blew – blown",       group: "eww" },
+  { type:"meaning", question: "to push air with your mouth 💨", answer: "blow – blew – blown",  group: "eww" },
+  { type:"meaning", question: "to become bigger 🌱",       answer: "grow – grew – grown",       group: "eww" },
+  { type:"meaning", question: "to have information about something 💡", answer: "know – knew – known", group: "eww" },
+  { type:"emoji",   question: "⚾",                        answer: "throw – threw – thrown",    group: "eww" },
+  { type:"meaning", question: "to launch something through the air ⚾", answer: "throw – threw – thrown", group: "eww" },
+  { type:"emoji",   question: "✈️",                        answer: "fly – flew – flown",        group: "eww" },
+  { type:"meaning", question: "to move through the sky ✈️", answer: "fly – flew – flown",       group: "eww" },
 
-  // The Riders
-  { question: "ride 🚴",                   answer: "ride – rode – ridden",      group: "riders" },
-  { question: "write ✍️",                  answer: "write – wrote – written",   group: "riders" },
-  { question: "drive 🚗",                  answer: "drive – drove – driven",    group: "riders" },
-  { question: "rise ☀️",                   answer: "rise – rose – risen",       group: "riders" },
+  // ── THE RIDERS ───────────────────────────────────────────────
+  { type:"emoji",   question: "🚴",                        answer: "ride – rode – ridden",      group: "riders" },
+  { type:"meaning", question: "to sit on and control a bike 🚴", answer: "ride – rode – ridden", group: "riders" },
+  { type:"emoji",   question: "✍️",                        answer: "write – wrote – written",   group: "riders" },
+  { type:"meaning", question: "to form words with a pen ✍️", answer: "write – wrote – written", group: "riders" },
+  { type:"emoji",   question: "🚗",                        answer: "drive – drove – driven",    group: "riders" },
+  { type:"meaning", question: "to control a vehicle 🚗",   answer: "drive – drove – driven",    group: "riders" },
+  { type:"meaning", question: "to go up or come up ☀️",    answer: "rise – rose – risen",       group: "riders" },
 
-  // The -en Group
-  { question: "eat 🍽️",                   answer: "eat – ate – eaten",         group: "en" },
-  { question: "speak 🗣️",                 answer: "speak – spoke – spoken",    group: "en" },
-  { question: "break 💔",                  answer: "break – broke – broken",    group: "en" },
-  { question: "steal 🦹",                  answer: "steal – stole – stolen",    group: "en" },
-  { question: "choose ✅",                 answer: "choose – chose – chosen",   group: "en" },
-  { question: "fall 🍂",                   answer: "fall – fell – fallen",      group: "en" },
-  { question: "give 🎁",                   answer: "give – gave – given",       group: "en" },
+  // ── THE -EN GROUP ────────────────────────────────────────────
+  { type:"emoji",   question: "🍽️",                        answer: "eat – ate – eaten",         group: "en" },
+  { type:"meaning", question: "to put food in your mouth 🍽️", answer: "eat – ate – eaten",      group: "en" },
+  { type:"meaning", question: "to use your voice to talk 🗣️", answer: "speak – spoke – spoken", group: "en" },
+  { type:"emoji",   question: "💔",                        answer: "break – broke – broken",    group: "en" },
+  { type:"meaning", question: "to separate something into pieces 💔", answer: "break – broke – broken", group: "en" },
+  { type:"meaning", question: "to take illegally 🦹",      answer: "steal – stole – stolen",    group: "en" },
+  { type:"meaning", question: "to pick one option ✅",     answer: "choose – chose – chosen",   group: "en" },
+  { type:"emoji",   question: "🍂",                        answer: "fall – fell – fallen",      group: "en" },
+  { type:"meaning", question: "to drop to the ground 🍂",  answer: "fall – fell – fallen",      group: "en" },
+  { type:"emoji",   question: "🎁",                        answer: "give – gave – given",       group: "en" },
+  { type:"meaning", question: "to offer something to someone 🎁", answer: "give – gave – given", group: "en" },
 
-  // The Loners
-  { question: "be ⭐",                     answer: "be – was/were – been",      group: "loners" },
-  { question: "go 🚶‍♂️",                   answer: "go – went – gone",          group: "loners" },
-  { question: "do ✅",                     answer: "do – did – done",           group: "loners" },
-  { question: "see 👁️",                   answer: "see – saw – seen",          group: "loners" },
-  { question: "take 🤚",                   answer: "take – took – taken",       group: "loners" },
-  { question: "wake ⏰",                   answer: "wake – woke – woken",       group: "loners" },
-  { question: "wear 👕",                   answer: "wear – wore – worn",        group: "loners" },
-  { question: "show 👉",                   answer: "show – showed – shown",     group: "loners" },
-  { question: "have 🤲",                   answer: "have – had – had",          group: "loners" },
-  { question: "make 🛠️",                  answer: "make – made – made",        group: "loners" },
+  // ── THE LONERS ───────────────────────────────────────────────
+  { type:"meaning", question: "to exist ⭐",               answer: "be – was/were – been",      group: "loners" },
+  { type:"meaning", question: "to move away from here 🚶‍♂️", answer: "go – went – gone",         group: "loners" },
+  { type:"meaning", question: "to complete a task ✅",     answer: "do – did – done",           group: "loners" },
+  { type:"emoji",   question: "👁️",                        answer: "see – saw – seen",          group: "loners" },
+  { type:"meaning", question: "to use your eyes 👁️",       answer: "see – saw – seen",          group: "loners" },
+  { type:"emoji",   question: "🤚",                        answer: "take – took – taken",       group: "loners" },
+  { type:"meaning", question: "to grab something 🤚",      answer: "take – took – taken",       group: "loners" },
+  { type:"emoji",   question: "⏰",                        answer: "wake – woke – woken",       group: "loners" },
+  { type:"meaning", question: "to stop sleeping ⏰",        answer: "wake – woke – woken",       group: "loners" },
+  { type:"emoji",   question: "👕",                        answer: "wear – wore – worn",        group: "loners" },
+  { type:"meaning", question: "to have clothes on your body 👕", answer: "wear – wore – worn",  group: "loners" },
+  { type:"meaning", question: "to let others see something 👉", answer: "show – showed – shown", group: "loners" },
+  { type:"meaning", question: "to possess something 🤲",   answer: "have – had – had",          group: "loners" },
+  { type:"meaning", question: "to create or produce something 🛠️", answer: "make – made – made", group: "loners" },
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -750,18 +799,16 @@ const screens = {
 function showScreen(name) {
   Object.values(screens).forEach(s => s.classList.remove('active'));
   screens[name].classList.add('active');
-  updateSkipBtn(name);
+  updateFloatingButtons(name);
 }
 
-// Toggle visibility of skip button based on active screen
-function updateSkipBtn(name) {
-  const btn = document.getElementById('skip-btn');
-  if (!btn) return;
-  btn.style.display = (name === 'game' || name === 'answer') ? 'flex' : 'none';
+// Show/hide floating buttons depending on active screen
+function updateFloatingButtons(name) {
+  const skip = document.getElementById('skip-btn');
   const showNow = document.getElementById('show-now-btn');
+  if (skip) skip.style.display = (name === 'game' || name === 'answer') ? 'flex' : 'none';
   if (showNow) showNow.style.display = (name === 'game') ? 'flex' : 'none';
 }
-
 
 // ─── GAME LOGIC ───────────────────────────────────────────────────────────────
 function pickVerb() {
@@ -782,14 +829,34 @@ function startGame() {
 
 function loadQuestion() {
   currentVerb = pickVerb();
+  const type = currentVerb.type || 'verb';
 
-  // Set question
+  // Set question text
   document.getElementById('question-text').textContent = currentVerb.question;
   document.getElementById('show-answer-wrap').style.display = 'none';
 
-  // Update question counter to show upcoming question number
-  const qCounter = document.getElementById('q-counter');
-  if (qCounter) qCounter.textContent = `#${totalPlayed + 1}`;
+  // Type pill
+  const pill = document.getElementById('question-type-pill');
+  const card = document.getElementById('question-card');
+  const qText = document.getElementById('question-text');
+  pill.className = 'question-type-pill'; // reset
+  qText.className = ''; // reset font size
+  card.className = ''; // reset border
+
+  if (type === 'emoji') {
+    pill.textContent = '🖼️  which verb is this?';
+    pill.classList.add('pill-emoji');
+    qText.classList.add('size-emoji');
+    card.classList.add('type-emoji');
+  } else if (type === 'meaning') {
+    pill.textContent = '💬  write the 3 forms';
+    pill.classList.add('pill-meaning');
+    qText.classList.add('size-meaning');
+    card.classList.add('type-meaning');
+  } else {
+    pill.textContent = '🔤  write the 3 forms';
+    pill.classList.add('pill-verb');
+  }
 
   // Reset timer visuals
   timeLeft = 18;
@@ -861,8 +928,13 @@ function showAnswer() {
   document.getElementById('score-num').textContent = totalPlayed;
   document.getElementById('q-counter').textContent = `#${totalPlayed}`;
 
-  // Set answer screen
-  document.getElementById('question-replay').textContent = currentVerb.question;
+  // Set answer screen – replay question with type-appropriate size
+  const replay = document.getElementById('question-replay');
+  replay.textContent = currentVerb.question;
+  const type = currentVerb.type || 'verb';
+  replay.style.fontSize = type === 'emoji' ? '3.5rem' : type === 'meaning' ? '1.6rem' : '2.8rem';
+  replay.style.lineHeight = type === 'meaning' ? '1.4' : '1.1';
+
   document.getElementById('answer-text').textContent = currentVerb.answer;
 
   showScreen('answer');
@@ -872,10 +944,9 @@ function nextQuestion() {
   loadQuestion();
 }
 
-// Skip current question immediately and load next (teacher override)
+// Skip current question without logging it as played
 function skipQuestion() {
   clearInterval(timerInterval);
-  // hide hint if visible
   const hint = document.getElementById('group-hint');
   if (hint) hint.classList.remove('visible');
   loadQuestion();
@@ -889,12 +960,15 @@ function openPrintModal() {
   }
   const ul = document.getElementById('session-list');
   ul.innerHTML = '';
+  const TYPE_ICON = { verb: '🔤', emoji: '🖼️', meaning: '💬' };
+
   sessionLog.forEach((v, i) => {
     const li = document.createElement('li');
     const g = GROUPS[v.group];
+    const icon = TYPE_ICON[v.type || 'verb'];
     li.innerHTML = `
       <span class="sl-num">${i + 1}.</span>
-      <span class="sl-q">${v.question}</span>
+      <span class="sl-q">${icon} ${v.question}</span>
       <span class="sl-a">${v.answer}</span>
       <span class="sl-g">${g.label}</span>
     `;
@@ -913,8 +987,9 @@ function doPrint() {
   tbody.innerHTML = '';
   sessionLog.forEach((v, i) => {
     const g = GROUPS[v.group];
+    const icon = { verb: '🔤', emoji: '🖼️', meaning: '💬' }[v.type || 'verb'];
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td><td>${v.question}</td><td><strong>${v.answer}</strong></td><td>${g.label}</td>`;
+    tr.innerHTML = `<td>${i+1}</td><td>${icon} ${v.question}</td><td><strong>${v.answer}</strong></td><td>${g.label}</td>`;
     tbody.appendChild(tr);
   });
   document.getElementById('print-date').textContent =
