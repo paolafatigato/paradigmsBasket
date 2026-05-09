@@ -547,6 +547,17 @@
   #show-now-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(184,212,84,0.45); }
 
   #print-sheet tr:nth-child(even) td { background: #fafafa; }
+
+  /* Footer */
+  #site-footer {
+    text-align: center;
+    padding: 18px 12px;
+    color: var(--text-light);
+    background: rgba(255,255,255,0.6);
+    border-top: 1px solid rgba(140,167,244,0.12);
+    font-size: 0.95rem;
+  }
+  #site-footer a { color: var(--wisteria-dark); text-decoration: none; }
 </style>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
@@ -1062,5 +1073,13 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
+
+<!-- Footer -->
+<footer id="site-footer" itemscope itemtype="https://schema.org/WPFooter">
+  <div itemprop="copyrightYear">© 2026</div>
+  <div>English Paradigms Basket — created by <span itemprop="author" itemscope itemtype="https://schema.org/Person"><span itemprop="name">Ms Fatigato</span></span></div>
+  <div style="margin-top:6px;font-size:0.85rem;color:var(--text-light);">Verb learning games, flashcards and classroom slides.</div>
+</footer>
+
 </body>
 </html>
